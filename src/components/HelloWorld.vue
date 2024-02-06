@@ -1,22 +1,18 @@
-<!-- HelloWorld.vue -->
 <template>
   <div class="hello">
-    <!-- Use the TableComponent and pass items as a prop -->
-    <TableComponent :items="response || []" @add-row="handleAddRow" @dispatch="dispatcherData"
-      @delete-row="handleDeleteRow" @edit-row="handleEditRow" />
+    <div class="common-buttons">
+      <button @click="getData">조회</button>
+      <button @click="setData">저장</button>
+      <button @click="addRow">추가</button>
+      <button @click="deleteData">삭제</button>
+    </div>
+    <TableComponent :items="response" ref="tableRef"
+    @push_row="pushRow" @update_list="updateList"  />
   </div>
 </template>
 
-
 <script>
-import axios from 'axios';
 import TableComponent from './TableComponent.vue';
-
-
-// 직렬화 함수 정의
-function serializeArray(arr, paramName) {
-  return arr.map(value => `${paramName}=${encodeURIComponent(value)}`).join('&');
-}
 
 export default {
   name: 'HelloWorld',
@@ -26,101 +22,59 @@ export default {
   },
 
   mounted() {
-    if (!this.response) {
-      // 데이터를 이미 불러왔다면 다시 불러오지 않음
-      this.dispatcherData('/api/list', '');
+    // response를 빈 배열로 초기화
+    this.response = [];
+    if (!this.response.length) {
+      this.getData();
     }
   },
 
   data() {
     return {
-      response: null,
+      response: [],
     };
   },
 
   methods: {
-
-    dispatcherData(url, data) {
-      return this.httpMethod(url, data)
-        .then(response => {
-          this.response = response.data;
-          if (url !== '/api/list') {
-            this.dispatcherData('/api/list', '');
-          }
-        })
-        .catch(error => {
-          console.error('에러 발생', error);
-        });
+    //데이터 조회
+    getData() {
+      // $refs를 사용하여 자식 컴포넌트의 함수 호출
+      this.response = this.$refs.tableRef.getData();
+    },
+    //데이터 조회 후 리스트 업데이트
+    updateList(datas) {
+      this.response = datas;
     },
 
-    httpMethod(url, data) {
-      switch (url) {
-        case '/api/list':
-          return axios.get(url);
-
-        case '/api/saveChanges':
-          console.log(data);
-          return axios.post(url, data, this.header);
-
-        case '/api/delete': {
-          if (data.length > 0) {
-            const queryString = serializeArray(data, 'list');
-
-            // 쿼리스트링을 직접 URL에 추가
-            const fullUrl = `${url}?${queryString}`;
-
-            return axios.delete(fullUrl, this.header());
-          } else {
-            return Promise.resolve();
-          }
-        }
-      }
+    //데이터 저장 및 수정
+    setData() {
+      this.$refs.tableRef.setData();
+      // 메소드에서 받아온 데이터를 this.response에 넣어줘야 하지 않을까?
     },
 
-    header() {
-      return {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      };
+    //새로운 행 추가
+    addRow() {
+      this.$refs.tableRef.addRow();
     },
 
-    handleAddRow(newRow) {
+    //새로운 행 추가 후 리스트 업데이트
+    pushRow(newRow) {
       this.response.push(newRow);
     },
 
-    // 매개변수는 배열
-    handleDeleteRow(selectedDataId) {
-      console.log("선택된 데이터의 시퀀스: ", selectedDataId);
-
-      // this.response라는 배열에서 id속성의 값이 selectedDataId와 동일한 배열을 제외 시키자
-      // selectedDataId 배열에 속하지 않은 항목들만 유지
-      this.response = this.response.filter(item => !selectedDataId.includes(item.id));
-    },
-
-    handleEditRow(index) {
-      this.response[index].editMode = true;
-    },
   },
 };
 </script>
 
 <style scoped>
-h3 {
-  margin: 40px 0 0;
+/* 우측 상단 버튼 스타일 */
+.common-buttons {
+  text-align: right;
+  margin-bottom: 2%;
+  margin-right: 5%;
 }
 
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-
-a {
-  color: #42b983;
+button {
+  margin-right: 5px;
 }
 </style>

@@ -1,20 +1,12 @@
 <!-- TableComponent.vue -->
 <template>
   <div>
-    <div class="common-buttons">
-      <button @click="getData">조회</button>
-      <button @click="saveChanges">저장</button>
-      <button @click="addRow">추가</button>
-      <button @click="deleteData">삭제</button>
-    </div>
-
     <table class="table table-striped">
       <thead>
         <tr>
           <th>
             <input type="checkbox" v-model="selectAll" @change="toggleSelectAll" />
           </th>
-          <!-- <th>번호</th> -->
           <th>아이디</th>
           <th>비밀번호</th>
           <th>작업</th>
@@ -25,9 +17,6 @@
           <td>
             <input type="checkbox" v-model="item.selected" />
           </td>
-          <!-- <td>
-            {{ item.id }}
-          </td> -->
           <td>
             <span v-if="item.isNew || item.editMode">
               <input v-model="item.user_nm" type="text" />
@@ -55,6 +44,8 @@
 
 
 <script>
+import axios from 'axios';
+
 export default {
   props: {
     items: {
@@ -71,21 +62,41 @@ export default {
   },
 
   methods: {
-
+    // 데이터 불러오기 및 검색
     getData() {
-      alert("목록 조회 완료");
-      this.$emit('dispatch', '/api/list');
+      axios
+        .get('/api/list')
+        .then(response => {
+          this.$emit('update_list', response.data);
+        })
+        .catch(error => {
+          console.error('에러 발생', error);
+        });
+    },
+
+    // 저장 및 수정
+    setData() {
+      const selectedRows = this.items.filter(item => item.selected); // 체크박스 선택된 행 정보만 새로운 배열에 담는다.
+      axios
+        .post('/api/insertAndUpdate', selectedRows)
+        .then(response => {
+          alert(response.data);
+          this.getData();
+        })
+        .catch(error => {
+          console.error('에러 발생', error);
+        });
     },
 
     // 행 추가
     addRow() {
       const newRow = { id: '', user_nm: '', pwd: '', isNew: true };
-      // DB에 저장된 마지막 행의 id 값에 1을 추가
-      const lastId = this.items.length > 0 ? this.items[this.items.length - 1].id : 0;
-      newRow.id = parseInt(lastId) + 1;
-
-      this.$emit('add-row', newRow);
+      this.$emit('push_row', newRow);
     },
+
+
+
+
 
 
     // 특정 데이터 행 수정폼으로 변환
@@ -147,7 +158,9 @@ export default {
       this.items.forEach(item => {
         item.selected = this.selectAll;
       });
-    }
+    },
+
+
   },
 };
 </script>
