@@ -123,13 +123,19 @@ export default {
       if (window.confirm("선택된 행을 삭제하시겠습니까?")) {
         const selectedRowIds = selectedRows.map(row => row.id);
         this.$emit('delete_row', selectedRowIds);
-        console.log("selectedRowIds" + selectedRowIds);
-
-        // 선택된 행들의 ID 배열 생성
-        // const selectedExistingRowsIds = selectedExistingRows.map(row => row.id); //배열로 선택된 후 삭제버튼 클릭시 해당 id 정보가 담긴다.
 
         // 부모 컴포넌트에 배열 전달
-        // this.$emit('dispatch', '/api/delete', selectedExistingRowsIds);
+        // this.$emit('dispatch', '/api/delete', selectedRows);
+        axios
+        .delete('/api/delete',{
+          data: selectedRows,
+        })
+        .then(response => {
+          alert(response.data);
+        })
+        .catch(error => {
+          console.error('에러 발생', error);
+        });
       }
     },
 
